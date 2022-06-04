@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-
+from random import randint
 
 class Crawler(BaseCrawler):
     page = None
@@ -34,6 +34,8 @@ class Crawler(BaseCrawler):
     university_homepage = "None"
     course_homepage = "None"
     professor_homepage = "None"
+    page_number = 1
+    mode = "all" #it can be advance tho
 
     def __init__(self):
         self.output_file = csv.writer(open(f'data/{self.__class__.__name__}.csv', 'w', encoding='utf-8', newline=''))
@@ -85,7 +87,10 @@ class Crawler(BaseCrawler):
         return
 
     def search(self):
-        self.page.find_element(By.ID, "id29").click()
+        try :
+            self.page.find_element(By.ID, "id29").click()
+        except:
+            self.page.find_element(By.ID, "id5").click()
         sleep(1)
 
     def __setup_driver(self):
@@ -117,7 +122,7 @@ class Crawler(BaseCrawler):
         course_trs = tbody.find_elements(By.TAG_NAME, "tr")
         return course_trs, titles_tr
 
-    def go_to_course_detail(self, course_tr,):
+    def go_to_course_detail(self, course_tr, ):
         try:
             myElem = WebDriverWait(course_tr, 10).until(
                 EC.presence_of_element_located((By.TAG_NAME, 'td')))
@@ -129,16 +134,27 @@ class Crawler(BaseCrawler):
         links[1].click()
 
     def select_all_courses(self):
-        try:
-            myElem = WebDriverWait(self.page, 10).until(EC.presence_of_element_located((By.ID, 'id30')))
-        except TimeoutException:
-            print("\n could not click on select all please retry.")
-        self.page.find_element(By.ID, "id30").click()
-        sleep(1)
+        if(self.mode=="advance"):
+            try:
+                myElem = WebDriverWait(self.page, 10).until(EC.presence_of_element_located((By.ID, 'id30')))
+                print("all courses are selected")
+            except TimeoutException:
+                print("\n could not click on select all please retry.")
+            self.page.find_element(By.ID, "id30").click()
+        else:
+            try:
+                myElem = WebDriverWait(self.page, 10).until(EC.presence_of_element_located((By.ID, 'id25')))
+                print("all courses are selected")
+            except TimeoutException:
+                print("\n could not click on select all please retry.")
+            self.page.find_element(By.ID, "id25").click()
+
+        sleep(randint(1,3))
 
     def download_standard_report(self):
         try:
             myElem = WebDriverWait(self.page, 10).until(EC.presence_of_element_located((By.ID, 'berichtLink')))
+            print(".... downloading standard report")
         except TimeoutException:
             print("\n could not click on berichtLink  please retry.")
         # self.page.find_element(By.ID,"berichtLink").click()
@@ -205,3 +221,12 @@ class Crawler(BaseCrawler):
 
     def handler(self):
         super().handler()
+
+    def go_to_next_page(self):
+        self.page.get(
+            'https://www.ksl.unibe.ch/KSL/veranstaltungen?0-1.-veranstaltungenForm-ergebnisContainer-navigator_top-navigation-' +
+            str(self.page_number) + '-pageLink&1/')
+        self.page_number+=1
+        print("going to next page ...")
+        sleep(randint(10,15))
+
